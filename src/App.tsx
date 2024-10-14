@@ -4,6 +4,7 @@ import React from 'react';
 import { UserWarning } from './UserWarning';
 import { USER_ID } from './api/todos';
 import { TodoContent } from './components/TodoContent';
+import classNames from 'classnames';
 
 export const App: React.FC = () => {
   if (!USER_ID) {
@@ -24,7 +25,7 @@ export const App: React.FC = () => {
             {/* this button should have `active` class only if all todos are completed */}
             <button
               type="button"
-              className="todoapp__toggle-all active"
+              className={classNames('todoapp__toggle-all ')}
               data-cy="ToggleAllButton"
             />
 
@@ -154,49 +155,6 @@ export const App: React.FC = () => {
               </div>
             </div>
           </section>
-
-          {/* Hide the footer if there are no todos */}
-          <footer className="todoapp__footer" data-cy="Footer">
-            <span className="todo-count" data-cy="TodosCounter">
-              3 items left
-            </span>
-
-            {/* Active link should have the 'selected' class */}
-            <nav className="filter" data-cy="Filter">
-              <a
-                href="#/"
-                className="filter__link selected"
-                data-cy="FilterLinkAll"
-              >
-                All
-              </a>
-
-              <a
-                href="#/active"
-                className="filter__link"
-                data-cy="FilterLinkActive"
-              >
-                Active
-              </a>
-
-              <a
-                href="#/completed"
-                className="filter__link"
-                data-cy="FilterLinkCompleted"
-              >
-                Completed
-              </a>
-            </nav>
-
-            {/* this button should be disabled if there are no completed todos */}
-            <button
-              type="button"
-              className="todoapp__clear-completed"
-              data-cy="ClearCompletedButton"
-            >
-              Clear completed
-            </button>
-          </footer>
         </div>
       )}
     </div>

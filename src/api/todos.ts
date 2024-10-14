@@ -11,6 +11,10 @@ export const postTodo = (todo: Omit<Todo, 'id'>) => {
   return client.post<Todo[]>(`/todos?userId=${USER_ID}`, todo);
 };
 
+export const updateTodo = (todo: Todo) => {
+  return client.patch<Todo[]>(`/todos/${todo.id}`, todo);
+};
+
 export const deleteSelectedTodo = (todo: Todo) => {
   return client.delete(`/todos/${todo.id}`);
 };
