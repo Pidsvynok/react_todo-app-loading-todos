@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Todo } from '../types/Todo';
 import { TodoList } from './TodoList';
-import { getTodos, postTodo, updateTodo, USER_ID } from '../api/todos';
+import {
+  deleteSelectedTodo,
+  getTodos,
+  postTodo,
+  updateTodo,
+  USER_ID,
+} from '../api/todos';
 import { Errors } from '../types/Errors';
 import classNames from 'classnames';
+import { FilterBy } from '../types/FilterBy';
 
 export const TodoContent: React.FC = () => {
   const [todoValue, setTodoValue] = useState<string>('');
@@ -13,9 +20,34 @@ export const TodoContent: React.FC = () => {
   const [completedTodos, setCompletedTodos] = useState<Todo[]>([]);
   const [isAllcompleted, setIsAllCompleted] = useState<boolean>(false);
   const [anyLoading, setAnyLoading] = useState<boolean>(false);
+  const [filterStatus, setFilterStatus] = useState<FilterBy>(FilterBy.all);
+  const [complTodoDeleteLoading, setComplTodoDeleteLoading] = useState<Todo[]>(
+    [],
+  );
+
+  function filterTodosByStatus(): Todo[] {
+    const filterActions = {
+      [FilterBy.active]: todosFromServer.filter(todo => !todo.completed),
+      [FilterBy.completed]: completedTodos,
+      [FilterBy.all]: todosFromServer,
+    };
+
+    return filterActions[filterStatus] || todosFromServer;
+  }
 
   function resetErrorMessage(): void {
     setErrorMessage('');
+  }
+
+  function handleClearCompleted() {
+    completedTodos.map(compTodo => {
+      setComplTodoDeleteLoading(prev => [...prev, compTodo]);
+      deleteSelectedTodo(compTodo)
+        .then(() => getTodos())
+        .then(setTodosFromServer)
+        .catch(() => setErrorMessage(Errors.notDelete))
+        .finally(() => setComplTodoDeleteLoading([]));
+    });
   }
 
   function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -39,7 +71,7 @@ export const TodoContent: React.FC = () => {
       setAnyLoading(true);
       const updatedTodo: Todo = {
         ...todo,
-        completed: !todo.completed,
+        completed: isAllcompleted ? false : true,
       };
 
       updateTodo(updatedTodo)
@@ -138,10 +170,11 @@ export const TodoContent: React.FC = () => {
         </header>
 
         <TodoList
-          todos={todosFromServer}
+          todos={filterTodosByStatus()}
           completedTodos={completedTodos}
           loadingTodo={loadingTodo}
           anyLoading={anyLoading}
+          clearCompleteLoading={complTodoDeleteLoading}
           setTodos={handleUpdateTodos}
           setErrorMessage={handleErrorMessage}
           resetError={resetErrorMessage}
@@ -151,44 +184,62 @@ export const TodoContent: React.FC = () => {
         {todosFromServer.length ? (
           <footer className="todoapp__footer" data-cy="Footer">
             <span className="todo-count" data-cy="TodosCounter">
-              {todosFromServer.length} items left
+              {todosFromServer.length - completedTodos.length} items left
             </span>
 
             {/* Active link should have the 'selected' class */}
             <nav className="filter" data-cy="Filter">
               <a
                 href="#/"
-                className="filter__link selected"
+                className={classNames('filter__link', {
+                  selected: filterStatus === FilterBy.all,
+                })}
                 data-cy="FilterLinkAll"
+                onClick={() => {
+                  setFilterStatus(FilterBy.all);
+                }}
               >
-                All
+                {FilterBy.all}
               </a>
 
               <a
                 href="#/active"
-                className="filter__link"
+                className={classNames('filter__link', {
+                  selected: filterStatus === FilterBy.active,
+                })}
                 data-cy="FilterLinkActive"
+                onClick={() => {
+                  setFilterStatus(FilterBy.active);
+                }}
               >
-                Active
+                {FilterBy.active}
               </a>
 
               <a
                 href="#/completed"
-                className="filter__link"
+                className={classNames('filter__link', {
+                  selected: filterStatus === FilterBy.completed,
+                })}
                 data-cy="FilterLinkCompleted"
+                onClick={() => {
+                  setFilterStatus(FilterBy.completed);
+                }}
               >
-                Completed
+                {FilterBy.completed}
               </a>
             </nav>
 
             {/* this button should be disabled if there are no completed todos */}
-            <button
-              type="button"
-              className="todoapp__clear-completed"
-              data-cy="ClearCompletedButton"
-            >
-              Clear completed
-            </button>
+            {completedTodos.length !== 0 && (
+              <button
+                type="button"
+                className="todoapp__clear-completed"
+                data-cy="ClearCompletedButton"
+                onClick={handleClearCompleted}
+              >
+                Clear completed
+              </button>
+            )}
           </footer>
         ) : null}
       </div>
@@ -212,13 +263,3 @@ export const TodoContent: React.FC = () => {
     </>
   );
 };
-
-{
-  /* {Errors.notAdd}
-        <br />
-        {Errors.notDelete}
-        <br />
-        {Errors.notEmpty}
-        <br />
-        {Errors.notUpdate} */
-}

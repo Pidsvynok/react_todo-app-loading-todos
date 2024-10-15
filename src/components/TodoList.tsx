@@ -9,6 +9,7 @@ interface Props {
   completedTodos: Todo[];
   loadingTodo: Todo | null;
   anyLoading: boolean;
+  clearCompleteLoading: Todo[];
   setTodos: (todos: Todo[]) => void;
   setErrorMessage: (errorMessage: Errors | '') => void;
   resetError: () => void;
@@ -20,6 +21,7 @@ export const TodoList: React.FC<Props> = ({
   completedTodos,
   loadingTodo,
   anyLoading,
+  clearCompleteLoading,
   setTodos,
   setErrorMessage,
   resetError,
@@ -37,7 +39,9 @@ export const TodoList: React.FC<Props> = ({
     };
 
     updateTodo(todoWithUpdatedCompletion)
-      .then(() => getTodos())
+      .then(() => {
+        return getTodos();
+      })
       .then(setTodos)
       .then(() => setUpdatingTodoId(null))
       .catch(() => {
@@ -131,6 +135,10 @@ export const TodoList: React.FC<Props> = ({
               type="checkbox"
               className="todo__status"
               onClick={() => handleCompleteTodo(todo)}
+              checked={
+                completedTodos.find(thisArrTodo => thisArrTodo.id === todo.id)
+                  ?.completed
+              }
             />
           </label>
 
@@ -167,7 +175,10 @@ export const TodoList: React.FC<Props> = ({
           <div
             data-cy="TodoLoader"
             className={classNames('modal overlay', {
-              'is-active': loadingTodo?.id === todo.id || anyLoading,
+              'is-active':
+                loadingTodo?.id === todo.id ||
+                anyLoading ||
+                clearCompleteLoading.includes(todo),
             })}
           >
             <div className="modal-background has-background-white-ter" />
